@@ -62,8 +62,7 @@
 * Real-time queue updates
 * Secure admin access
 
----
-
+----
 ### 7️⃣ Non-Functional Requirements (Asked)
 
 * Fast response (<300ms)
