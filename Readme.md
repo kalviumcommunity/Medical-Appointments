@@ -252,11 +252,6 @@ Frontend and backend development will proceed **in parallel** where feasible.
 
 ---
 
-## 🔹 One-Line Summary
-
-> **PulseStack is a lightweight QR and SMS-based digital queueing system that replaces physical OPD queues in Tier-2/3 hospitals without expensive infrastructure.**
-
----
 
 ## 📊 Success Metrics
 
