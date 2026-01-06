@@ -1,74 +1,168 @@
-## Project: Lightweight Digital Queueing System
+# 🏥 PulseStack
 
-### 1️⃣ Problem & Solution (Important)
+**Lightweight Digital Queueing System for OPDs**
 
-* *Problem:* Hospitals in Tier-2/3 cities still use physical queues, causing long waits and overcrowding.
-* *Solution:* A *QR + SMS–based digital queueing system* that issues tokens and lets hospitals manage queues via a simple web dashboard.
-* *Users:* Patients, hospital staff, OPD admins.
-* *Value:* Low-cost, easy to use, no expensive infrastructure.
+> PulseStack is a low-cost **QR + SMS–based digital queueing system** designed to replace physical OPD queues in Tier-2/3 hospitals without expensive infrastructure or mobile apps.
 
 ---
 
-### 2️⃣ Scope (Asked)
+## 📌 Problem Statement
 
-*In Scope*
-
-* QR-based registration
-* SMS token notification
-* Admin queue dashboard
-* Doctor-wise queues
-
-*Out of Scope*
-
-* Mobile apps
-* Payments
-* Advanced analytics
+In many Tier-2 and Tier-3 cities, hospital OPDs still depend on **physical queues and manual token systems**. This causes overcrowding, long and uncertain wait times, poor queue visibility, and operational strain on hospital staff.
+Most existing digital solutions are costly, hardware-heavy, or complex to deploy—making them impractical for smaller hospitals.
 
 ---
 
-### 3️⃣ Tech Stack (Important)
+## 💡 Solution Overview
 
-* *Frontend:* React.js, HTML, CSS
-* *Backend:* Node.js, Express.js
-* *Database:* MongoDB Atlas
-* *Auth:* JWT
-* *Notifications:* Free SMS API
-* *Deployment:* Vercel (FE), Render/Railway (BE)
+**PulseStack** digitizes OPD queues using **QR codes and SMS notifications**, allowing patients to join queues easily while enabling hospital staff to manage queues through a simple web dashboard.
 
----
+### Target Users
 
-### 4️⃣ MVP (Must-Have)
+* **Patients:** Walk-in OPD visitors
+* **Hospital Staff:** Receptionists and nurses managing queues
+* **OPD Admins:** Supervising doctor-wise queues
 
-* Patient registers via QR
-* Token generated & sent via SMS
-* Admin can call next token
-* Live queue updates
+### Value Delivered
 
----
-
-### 5️⃣ Sprint Timeline (Asked)
-
-* *Week 1:* Planning, design, DB schema
-* *Week 2:* Backend APIs + frontend basics
-* *Week 3:* Integration & testing
-* *Week 4:* Deployment & demo
+* Reduced physical crowding
+* Clear and fair queue flow
+* Minimal setup and training
+* Low operational cost
 
 ---
 
-### 6️⃣ Functional Requirements (Key)
+## ✨ Key Features
 
-* Generate unique tokens
-* Manage multiple queues
-* Real-time queue updates
-* Secure admin access
+* QR-based patient registration
+* Automatic token generation
+* SMS notification with token number
+* Doctor-wise queue management
+* Web-based admin dashboard
+* Secure admin authentication
 
 ---
 
-### 7️⃣ Non-Functional Requirements (Asked)
+## 📦 Scope & Boundaries
 
-* Fast response (<300ms)
-* Secure authentication
-* Supports 100+ users
-* Reliable token handling
+### ✅ In Scope
+
+* QR-based walk-in registration
+* SMS token notifications
+* Admin dashboard for queue control
+* Multiple doctor / OPD queues
+
+### ❌ Out of Scope
+
+* Native mobile applications
+* Online payments or billing
+* Advanced analytics and reporting
+* Full hospital management system integration
+
+This controlled scope ensures **reliable delivery within a 4-week sprint**.
+
+---
+
+## 🛠️ Tech Stack
+
+**Frontend**
+
+* React.js
+* HTML, CSS
+
+**Backend**
+
+* Node.js
+* Express.js
+
+**Database**
+
+* MongoDB Atlas
+
+**Authentication**
+
+* JWT (Admin access)
+
+**Notifications**
+
+* SMS gateway (free-tier / mock for MVP)
+
+**Deployment**
+
+* Frontend: Vercel
+* Backend: Render / Railway
+
+---
+
+## 🚀 MVP (Minimum Viable Product)
+
+By the end of the sprint, PulseStack will deliver a **fully functional MVP** with:
+
+* QR-based patient registration
+* Unique token generation
+* SMS delivery of tokens
+* Admin dashboard to call next patient
+* Doctor-wise queue handling
+* Live queue updates (polling-based)
+
+---
+
+## ⏱️ Sprint Timeline (4 Weeks)
+
+| Week   | Focus Area            | Deliverables                              |
+| ------ | --------------------- | ----------------------------------------- |
+| Week 1 | Planning & Design     | Requirements, system design, DB schema    |
+| Week 2 | Core Development      | Backend APIs, frontend base components    |
+| Week 3 | Integration & Testing | API integration, error handling, testing  |
+| Week 4 | Deployment & Demo     | Feature freeze, deployment, documentation |
+
+Frontend and backend development will proceed **in parallel** where feasible.
+
+---
+
+## ⚙️ Functional Requirements
+
+* Patients can register via QR code
+* System generates unique tokens per queue
+* Tokens are delivered via SMS
+* Admin can view and manage live queues
+* Admin can call the next token
+* Multiple doctor-wise queues are supported
+* Secure JWT-based admin authentication
+
+---
+
+## 🔐 Non-Functional Requirements
+
+* API response time under **300ms**
+* Support for **100+ concurrent users**
+* Secure authentication and protected routes
+* Reliable and conflict-free token handling
+* Simple and accessible UI
+
+---
+
+## 📊 Success Metrics
+
+* Fully deployed and working MVP
+* Successful end-to-end demo
+* All core user flows functional
+* Reduced dependency on physical queues during testing
+
+---
+
+## ⚠️ Risks & Mitigation
+
+| Risk                | Impact                  | Mitigation      |
+| ------------------- | ----------------------- | --------------- |
+| Backend delays      | Slows frontend progress | Use mock APIs   |
+| Network instability | SMS failures            | Retry handling  |
+| Scope creep         | Missed deadlines        | Strict MVP lock |
+
+---
+
+## 🔹 One-Line Summary
+
+> **PulseStack is a lightweight QR and SMS-based digital queueing system that replaces physical OPD queues in Tier-2/3 hospitals without expensive infrastructure.**
 
 ---
