@@ -2,7 +2,7 @@
 
 **Lightweight Digital Queueing System for OPDs**
 
-> PulseStack is a low-cost **QR + SMS–based digital queueing system** designed to replace physical OPD queues in Tier-2/3 hospitals without expensive infrastructure or mobile apps.
+ PulseStack is a low-cost **QR + SMS–based digital queueing system** designed to replace physical OPD queues in Tier-2/3 hospitals without expensive infrastructure or mobile apps.
 
 ---
 
@@ -148,21 +148,4 @@ Frontend and backend development will proceed **in parallel** where feasible.
 * Successful end-to-end demo
 * All core user flows functional
 * Reduced dependency on physical queues during testing
-
----
-
-## ⚠️ Risks & Mitigation
-
-| Risk                | Impact                  | Mitigation      |
-| ------------------- | ----------------------- | --------------- |
-| Backend delays      | Slows frontend progress | Use mock APIs   |
-| Network instability | SMS failures            | Retry handling  |
-| Scope creep         | Missed deadlines        | Strict MVP lock |
-
----
-
-## 🔹 One-Line Summary
-
-> **PulseStack is a lightweight QR and SMS-based digital queueing system that replaces physical OPD queues in Tier-2/3 hospitals without expensive infrastructure.**
-
 ---
