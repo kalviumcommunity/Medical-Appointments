@@ -224,8 +224,17 @@ By the end of the sprint, PulseStack delivers:
 
 ---
 
+
 ## 🔹 One-Line Summary
 
 > *PulseStack is a QR and SMS-based digital OPD queue management system built with a modern Next.js full-stack architecture for low-infrastructure hospitals.*
+
+=======
+## 📊 Success Metrics
+
+* Fully deployed and working MVP
+* Successful end-to-end demo
+* All core user flows functional
+* Reduced dependency on physical queues during testing
 
 ---
