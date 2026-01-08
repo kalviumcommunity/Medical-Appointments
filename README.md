@@ -75,13 +75,12 @@ This structure ensures clarity and scalability for future sprints.
 
 npm  install
 
-
+```
 
 ## 🖥️ Local Development Screenshot
 
 ![Local App Running](./image.png)
 
-```
 
 ---
 
