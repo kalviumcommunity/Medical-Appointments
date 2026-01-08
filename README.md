@@ -77,11 +77,53 @@ npm  install
 
 ```
 
+=======
+
+
 ## 🖥️ Local Development Screenshot
 
 ![Local App Running](./image.png)
 
+---
 
+## 🧪 TypeScript & ESLint Configuration
+
+### Strict TypeScript
+Strict TypeScript mode is enabled to catch potential bugs early by enforcing strong typing, preventing unused variables, and avoiding implicit `any` types. This helps reduce runtime errors and improves overall code reliability.
+
+### ESLint & Prettier
+ESLint is configured to enforce consistent coding standards such as avoiding unnecessary console logs and maintaining consistent syntax.  
+Prettier ensures uniform code formatting across the project for better readability and maintainability.
+
+### Pre-Commit Hooks
+Husky and lint-staged are configured to run ESLint and Prettier automatically before every commit. This ensures that only clean, formatted, and lint-free code is committed to the repository, improving team collaboration and code quality.
+
+---
+
+
+## 🔐 Environment Variable Management
+
+This project uses environment variables to manage configuration and sensitive information securely.
+
+### Environment Files
+- **.env.local**  
+  Stores actual secret values such as database URLs and API keys.  
+  This file is ignored by Git and is never committed.
+
+- **.env.example**  
+  Acts as a template listing all required environment variables with placeholder values.  
+  This helps other developers replicate the setup safely.
+
+### Server-side vs Client-side Variables
+- Variables without a prefix (e.g., `DATABASE_URL`) are **server-side only**.
+- Variables prefixed with `NEXT_PUBLIC_` are safe to use on the client side.
+
+
+### Security Practices
+- Secrets are never exposed to the browser.
+- `.env.local` is protected using `.gitignore`.
+- Only non-sensitive configuration is shared via `.env.example`.
+=======
 ---
 
 ## 🧪 TypeScript & ESLint Configuration
@@ -98,3 +140,4 @@ Husky and lint-staged are configured to run ESLint and Prettier automatically be
 
 
 
+---
