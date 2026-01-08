@@ -81,5 +81,16 @@ npm  install
 
 ![Local App Running](./image.png)
 
+---
 
+## 🧪 TypeScript & ESLint Configuration
 
+### Strict TypeScript
+Strict TypeScript mode is enabled to catch potential bugs early by enforcing strong typing, preventing unused variables, and avoiding implicit `any` types. This helps reduce runtime errors and improves overall code reliability.
+
+### ESLint & Prettier
+ESLint is configured to enforce consistent coding standards such as avoiding unnecessary console logs and maintaining consistent syntax.  
+Prettier ensures uniform code formatting across the project for better readability and maintainability.
+
+### Pre-Commit Hooks
+Husky and lint-staged are configured to run ESLint and Prettier automatically before every commit. This ensures that only clean, formatted, and lint-free code is committed to the repository, improving team collaboration and code quality.
