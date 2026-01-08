@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏥 Medical Appointments
+  
 
-## Getting Started
+### Lightweight Digital OPD Queue Management System
+  
 
-First, run the development server:
+Medical Appointments is a Next.js (TypeScript) based project aimed at building a lightweight digital OPD queue management system for hospitals.
+  
+
+This repository currently contains the **project initialization and base folder structure** for Sprint 1.
+  
+
+---
+
+
+## 📁 Folder Structure
+
+  
+src/
+
+├── app/ # Routes and pages using Next.js App Router
+
+│ ├── page.tsx # Home page
+
+│ ├── layout.tsx # Root layout
+
+│ └── globals.css # Global styles
+
+│
+
+├── components/ # Reusable UI components
+
+│ └── Header.tsx
+
+│
+
+├── lib/ # Utility functions and helpers
+
+│ └── constants.ts
+
+  
+---
+  
+
+## 📂 Folder Explanation
+
+
+-  **app/**
+
+Contains application routes and layouts using Next.js App Router.
+
+  
+-  **components/**
+
+Stores reusable UI components for better maintainability.
+
+  
+-  **lib/**
+
+Contains shared utilities and constants used across the app.
+
+  
+This structure ensures clarity and scalability for future sprints.
+
+  
+---
+  
+
+## ⚙️ Setup Instructions
+
+
+### Install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+npm  install
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## 🖥️ Local Development Screenshot
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+![Local App Running](./image.png)
