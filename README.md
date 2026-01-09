@@ -141,3 +141,23 @@ Husky and lint-staged are configured to run ESLint and Prettier automatically be
 
 
 ---
+
+## 🐳 Docker Setup
+
+This project is containerized using Docker and Docker Compose.  
+
+It includes three services:  
+
+## Next.js app, 
+## PostgreSQL database,
+## Redis cache.  
+
+The Dockerfile builds the app, installs dependencies, and runs `npm start`.  
+
+`docker-compose.yml` sets up all services, networks, and persistent volumes.  
+
+Run `docker-compose up --build` to start all containers locally.  
+
+The app is then accessible at http://localhost:3000, with database and cache ready to use.
+
+---
