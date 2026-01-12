@@ -77,6 +77,8 @@ npm  install
 
 ```
 
+=======
+
 
 ## 🖥️ Local Development Screenshot
 
@@ -116,10 +118,21 @@ This project uses environment variables to manage configuration and sensitive in
 - Variables without a prefix (e.g., `DATABASE_URL`) are **server-side only**.
 - Variables prefixed with `NEXT_PUBLIC_` are safe to use on the client side.
 
+
 ### Security Practices
 - Secrets are never exposed to the browser.
 - `.env.local` is protected using `.gitignore`.
 - Only non-sensitive configuration is shared via `.env.example`.
+=======
+---
+
+
+## 🐳 Docker Setup
+
+This project is containerized using Docker and Docker Compose.  
+
+It includes three services:  
+
 
 ---
 
@@ -130,3 +143,5 @@ Supabase PostgreSQL is configured as the database using the Transaction Pooler.
 Prisma Client is generated for type-safe database queries.
 Database schema is defined in `schema.prisma` and synced using `prisma db push`.
 The setup ensures scalable, secure, and reliable database connectivity.
+
+---
