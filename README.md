@@ -122,3 +122,11 @@ This project uses environment variables to manage configuration and sensitive in
 - Only non-sensitive configuration is shared via `.env.example`.
 
 ---
+
+# Prisma ORM Setup
+
+This project uses Prisma ORM with a Next.js application.
+Supabase PostgreSQL is configured as the database using the Transaction Pooler.
+Prisma Client is generated for type-safe database queries.
+Database schema is defined in `schema.prisma` and synced using `prisma db push`.
+The setup ensures scalable, secure, and reliable database connectivity.
