@@ -133,16 +133,15 @@ This project is containerized using Docker and Docker Compose.
 
 It includes three services:  
 
-## Next.js app, 
-## PostgreSQL database,
-## Redis cache.  
 
-The Dockerfile builds the app, installs dependencies, and runs `npm start`.  
+---
 
-`docker-compose.yml` sets up all services, networks, and persistent volumes.  
+# Prisma ORM Setup
 
-Run `docker-compose up --build` to start all containers locally.  
-
-The app is then accessible at http://localhost:3000, with database and cache ready to use.
+This project uses Prisma ORM with a Next.js application.
+Supabase PostgreSQL is configured as the database using the Transaction Pooler.
+Prisma Client is generated for type-safe database queries.
+Database schema is defined in `schema.prisma` and synced using `prisma db push`.
+The setup ensures scalable, secure, and reliable database connectivity.
 
 ---
