@@ -1,5 +1,6 @@
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -7,17 +8,18 @@ generator client {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  createdAt DateTime  @default(now())
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
   appointments Appointment[]
+  createdAt    DateTime      @default(now())
 }
 
 model Appointment {
-  id      Int      @id @default(autoincrement())
-  date    DateTime
-  reason  String
-  userId  Int
-  user    User     @relation(fields: [userId], references: [id])
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  reason    String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }

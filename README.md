@@ -136,12 +136,28 @@ It includes three services:
 
 ---
 
-# Prisma ORM Setup
+# 🚀 API Documentation
 
-This project uses Prisma ORM with a Next.js application.
-Supabase PostgreSQL is configured as the database using the Transaction Pooler.
-Prisma Client is generated for type-safe database queries.
-Database schema is defined in `schema.prisma` and synced using `prisma db push`.
-The setup ensures scalable, secure, and reliable database connectivity.
+## 📡 RESTful API Endpoints
+
+This application provides a comprehensive RESTful API for managing users and appointments. All endpoints return JSON responses and follow REST conventions.
+
+### 🗂️ API Route Hierarchy
+
+```
+/api/
+├── users/
+│   ├── GET    /api/users              # List all users (paginated)
+│   ├── POST   /api/users              # Create new user
+│   ├── GET    /api/users/[id]         # Get specific user
+│   ├── PUT    /api/users/[id]         # Update user
+│   └── DELETE /api/users/[id]         # Delete user
+└── appointments/
+    ├── GET    /api/appointments       # List all appointments (paginated)
+    ├── POST   /api/appointments       # Create new appointment
+    ├── GET    /api/appointments/[id]  # Get specific appointment
+    ├── PUT    /api/appointments/[id]  # Update appointment
+    └── DELETE /api/appointments/[id]  # Delete appointment
+```
 
 ---
