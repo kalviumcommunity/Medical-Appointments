@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(req: Request) {
   try {
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
         location: "src/app/api/appointments/route.ts:5",
         message: "appointments GET entry",
         data: {
-          hasDatabaseUrlEnv: Boolean(process.env.DATABASE_URL),
+          hasDatabaseUrlEnv: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
           nodeEnv: process.env.NODE_ENV ?? null,
         },
         timestamp: Date.now(),
@@ -29,39 +29,46 @@ export async function GET(req: Request) {
 
     const skip = (page - 1) * limit;
 
-    const whereClause = userId ? { userId: Number(userId) } : {};
+    // Build query
+    let query = supabase
+      .from("Appointment")
+      .select(
+        `
+        *,
+        User (
+          id,
+          name,
+          email
+        )
+      `,
+        { count: "exact" }
+      )
+      .order("date", { ascending: false })
+      .range(skip, skip + limit - 1);
 
-    const [appointments, totalCount] = await Promise.all([
-      prisma.appointment.findMany({
-        where: whereClause,
-        skip,
-        take: limit,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: {
-          date: "desc",
-        },
-      }),
-      prisma.appointment.count({
-        where: whereClause,
-      }),
-    ]);
+    // Add userId filter if provided
+    if (userId) {
+      query = query.eq("userId", Number(userId));
+    }
 
-    const totalPages = Math.ceil(totalCount / limit);
+    const {
+      data: appointments,
+      error: appointmentsError,
+      count: totalCount,
+    } = await query;
+
+    if (appointmentsError) {
+      throw appointmentsError;
+    }
+
+    const totalPages = Math.ceil((totalCount || 0) / limit);
 
     return NextResponse.json({
       page,
       limit,
-      totalCount,
+      totalCount: totalCount || 0,
       totalPages,
-      data: appointments,
+      data: appointments || [],
     });
   } catch (error) {
     const err = error as { name?: string; message?: string };
@@ -101,30 +108,46 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: Number(userId) },
-    });
+    // Check if user exists
+    const { data: user, error: userError } = await supabase
+      .from("User")
+      .select("*")
+      .eq("id", Number(userId))
+      .maybeSingle();
+
+    if (userError) {
+      throw userError;
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const appointment = await prisma.appointment.create({
-      data: {
-        date: new Date(date),
-        reason,
-        userId: Number(userId),
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+    // Create appointment
+    const { data: appointment, error: createError } = await supabase
+      .from("Appointment")
+      .insert([
+        {
+          date: new Date(date).toISOString(),
+          reason,
+          userId: Number(userId),
         },
-      },
-    });
+      ])
+      .select(
+        `
+        *,
+        User (
+          id,
+          name,
+          email
+        )
+      `
+      )
+      .single();
+
+    if (createError) {
+      throw createError;
+    }
 
     return NextResponse.json(appointment, { status: 201 });
   } catch (error) {
