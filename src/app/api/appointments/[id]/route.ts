@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(
   req: Request,
@@ -16,18 +16,30 @@ export async function GET(
       );
     }
 
-    const appointment = await prisma.appointment.findUnique({
-      where: { id: idNum },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
+    const { data: appointment, error } = await supabase
+      .from("Appointment")
+      .select(
+        `
+        *,
+        User (
+          id,
+          name,
+          email
+        )
+      `
+      )
+      .eq("id", idNum)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        return NextResponse.json(
+          { error: "Appointment not found" },
+          { status: 404 }
+        );
+      }
+      throw error;
+    }
 
     if (!appointment) {
       return NextResponse.json(
@@ -70,9 +82,16 @@ export async function PUT(
       );
     }
 
-    const existingAppointment = await prisma.appointment.findUnique({
-      where: { id: idNum },
-    });
+    // Check if appointment exists
+    const { data: existingAppointment, error: fetchError } = await supabase
+      .from("Appointment")
+      .select("*")
+      .eq("id", idNum)
+      .maybeSingle();
+
+    if (fetchError) {
+      throw fetchError;
+    }
 
     if (!existingAppointment) {
       return NextResponse.json(
@@ -81,31 +100,45 @@ export async function PUT(
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: Number(userId) },
-    });
+    // Check if user exists
+    const { data: user, error: userError } = await supabase
+      .from("User")
+      .select("*")
+      .eq("id", Number(userId))
+      .maybeSingle();
+
+    if (userError) {
+      throw userError;
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const updatedAppointment = await prisma.appointment.update({
-      where: { id: idNum },
-      data: {
-        date: new Date(date),
+    // Update appointment
+    const { data: updatedAppointment, error: updateError } = await supabase
+      .from("Appointment")
+      .update({
+        date: new Date(date).toISOString(),
         reason,
         userId: Number(userId),
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
+      })
+      .eq("id", idNum)
+      .select(
+        `
+        *,
+        User (
+          id,
+          name,
+          email
+        )
+      `
+      )
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
 
     return NextResponse.json(updatedAppointment);
   } catch (error) {
@@ -132,9 +165,16 @@ export async function DELETE(
       );
     }
 
-    const existingAppointment = await prisma.appointment.findUnique({
-      where: { id: idNum },
-    });
+    // Check if appointment exists
+    const { data: existingAppointment, error: fetchError } = await supabase
+      .from("Appointment")
+      .select("*")
+      .eq("id", idNum)
+      .maybeSingle();
+
+    if (fetchError) {
+      throw fetchError;
+    }
 
     if (!existingAppointment) {
       return NextResponse.json(
@@ -143,9 +183,15 @@ export async function DELETE(
       );
     }
 
-    await prisma.appointment.delete({
-      where: { id: idNum },
-    });
+    // Delete appointment
+    const { error: deleteError } = await supabase
+      .from("Appointment")
+      .delete()
+      .eq("id", idNum);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     return NextResponse.json(
       { message: "Appointment deleted successfully" },

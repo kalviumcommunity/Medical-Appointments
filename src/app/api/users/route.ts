@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(req: Request) {
   try {
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
         location: "src/app/api/users/route.ts:7",
         message: "users GET entry",
         data: {
-          hasDatabaseUrlEnv: Boolean(process.env.DATABASE_URL),
+          hasDatabaseUrlEnv: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
           nodeEnv: process.env.NODE_ENV ?? null,
         },
         timestamp: Date.now(),
@@ -28,31 +28,42 @@ export async function GET(req: Request) {
 
     const skip = (page - 1) * limit;
 
-    const [users, totalCount] = await Promise.all([
-      prisma.user.findMany({
-        skip,
-        take: limit,
-        include: {
-          appointments: {
-            select: {
-              id: true,
-              date: true,
-              reason: true,
-            },
-          },
-        },
-      }),
-      prisma.user.count(),
-    ]);
+    // Get users with pagination
+    const { data: users, error: usersError } = await supabase
+      .from("User")
+      .select(
+        `
+        *,
+        Appointment (
+          id,
+          date,
+          reason
+        )
+      `
+      )
+      .range(skip, skip + limit - 1);
 
-    const totalPages = Math.ceil(totalCount / limit);
+    if (usersError) {
+      throw usersError;
+    }
+
+    // Get total count
+    const { count: totalCount, error: countError } = await supabase
+      .from("User")
+      .select("*", { count: "exact", head: true });
+
+    if (countError) {
+      throw countError;
+    }
+
+    const totalPages = Math.ceil((totalCount || 0) / limit);
 
     return NextResponse.json({
       page,
       limit,
-      totalCount,
+      totalCount: totalCount || 0,
       totalPages,
-      data: users,
+      data: users || [],
     });
   } catch (error) {
     const err = error as { name?: string; message?: string };
@@ -92,9 +103,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    // Check if user with email already exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from("User")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (checkError) {
+      throw checkError;
+    }
 
     if (existingUser) {
       return NextResponse.json(
@@ -103,17 +121,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-      },
-      include: {
-        appointments: true,
-      },
-    });
+    // Create new user
+    const { data: newUser, error: createError } = await supabase
+      .from("User")
+      .insert([{ name, email }])
+      .select(
+        `
+        *,
+        Appointment (*)
+      `
+      )
+      .single();
 
-    return NextResponse.json(user, { status: 201 });
+    if (createError) {
+      throw createError;
+    }
+
+    return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
     console.error("Error creating user:", error);
     return NextResponse.json(

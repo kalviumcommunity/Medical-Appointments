@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(
   req: Request,
@@ -13,16 +13,26 @@ export async function GET(
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: idNum },
-      include: {
-        appointments: {
-          orderBy: {
-            date: "desc",
-          },
-        },
-      },
-    });
+    const { data: user, error } = await supabase
+      .from("User")
+      .select(
+        `
+        *,
+        Appointment (
+          *
+        )
+      `
+      )
+      .eq("id", idNum)
+      .order("date", { foreignTable: "Appointment", ascending: false })
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+      throw error;
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -59,18 +69,32 @@ export async function PUT(
       );
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id: idNum },
-    });
+    // Check if user exists
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("User")
+      .select("*")
+      .eq("id", idNum)
+      .maybeSingle();
+
+    if (fetchError) {
+      throw fetchError;
+    }
 
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Check if email is being changed and if new email already exists
     if (email !== existingUser.email) {
-      const emailExists = await prisma.user.findUnique({
-        where: { email },
-      });
+      const { data: emailExists, error: emailCheckError } = await supabase
+        .from("User")
+        .select("*")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (emailCheckError) {
+        throw emailCheckError;
+      }
 
       if (emailExists) {
         return NextResponse.json(
@@ -80,16 +104,22 @@ export async function PUT(
       }
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: idNum },
-      data: {
-        name,
-        email,
-      },
-      include: {
-        appointments: true,
-      },
-    });
+    // Update user
+    const { data: updatedUser, error: updateError } = await supabase
+      .from("User")
+      .update({ name, email })
+      .eq("id", idNum)
+      .select(
+        `
+        *,
+        Appointment (*)
+      `
+      )
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
 
     return NextResponse.json(updatedUser);
   } catch (error) {
@@ -113,17 +143,30 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id: idNum },
-    });
+    // Check if user exists
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("User")
+      .select("*")
+      .eq("id", idNum)
+      .maybeSingle();
+
+    if (fetchError) {
+      throw fetchError;
+    }
 
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    await prisma.user.delete({
-      where: { id: idNum },
-    });
+    // Delete user
+    const { error: deleteError } = await supabase
+      .from("User")
+      .delete()
+      .eq("id", idNum);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     return NextResponse.json(
       { message: "User deleted successfully" },
