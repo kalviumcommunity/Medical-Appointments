@@ -1,41 +1,62 @@
-import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
+import { prisma } from "@/lib/prisma";
+import { sendSuccess, sendError } from "@/lib/responseHandler";
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
+  try {
+    const { email, password } = await req.json();
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return NextResponse.json(
-      { message: "Invalid credentials" },
-      { status: 401 }
+    // 1️⃣ Validation
+    if (!email || !password) {
+      return sendError(
+        "Email and password are required",
+        "VALIDATION_ERROR",
+        400
+      );
+    }
+
+    // 2️⃣ Find user
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return sendError("Invalid credentials", "AUTH_FAILED", 401);
+    }
+
+    // 3️⃣ Verify password
+    const isValid = await bcrypt.compare(password, user.password);
+
+    if (!isValid) {
+      return sendError("Invalid credentials", "AUTH_FAILED", 401);
+    }
+
+    // 4️⃣ Generate JWT
+    if (!process.env.JWT_SECRET) {
+      return sendError("JWT secret not configured", "CONFIG_ERROR", 500);
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
     );
-  }
 
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) {
-    return NextResponse.json(
-      { message: "Invalid credentials" },
-      { status: 401 }
+    // 5️⃣ Remove password from response
+    const { password: _, ...safeUser } = user;
+
+    // 6️⃣ Success response
+    return sendSuccess(
+      {
+        token,
+        user: safeUser,
+      },
+      "Login successful"
     );
+  } catch (error) {
+    console.error("Login error:", error);
+
+    return sendError("Internal server error", "INTERNAL_ERROR", 500, error);
   }
-
-  const token = jwt.sign(
-    { userId: user.id, role: user.role },
-    process.env.JWT_SECRET!,
-    { expiresIn: "1d" }
-  );
-
-  return NextResponse.json({
-    message: "Login successful",
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
-  });
 }
