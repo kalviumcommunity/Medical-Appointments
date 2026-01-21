@@ -175,3 +175,74 @@ This application provides a comprehensive RESTful API for managing users and app
 - Using a centralized response utility makes the API scalable and easier to maintain.
 
 ---
+
+Here’s a **short & clean `README.md`** 👇
+
+---
+
+# 🔐 RBAC Authorization Middleware – Next.js
+
+## Overview
+
+This project implements **Role-Based Access Control (RBAC)** using **JWT authorization middleware** in a Next.js application. Authentication verifies *who* the user is, while authorization controls *what* they can access.
+
+---
+
+## Roles
+
+* `user` → Access to general protected routes
+* `admin` → Access to admin-only routes
+
+---
+
+## Folder Structure
+
+```
+app/
+ ├── api/
+ │    ├── users/   # Authenticated users
+ │    └── admin/   # Admin-only
+ └── middleware.ts
+```
+
+---
+
+## How Middleware Works
+
+1. Intercepts incoming API requests
+2. Verifies JWT from `Authorization` header
+3. Checks user role
+4. Allows or denies access
+
+---
+
+## Protected Routes
+
+| Route        | Access              |
+| ------------ | ------------------- |
+| `/api/users` | Authenticated users |
+| `/api/admin` | Admin only          |
+
+---
+
+## Testing
+
+**Admin JWT → `/api/admin`** ✅ Allowed
+**User JWT → `/api/admin`** ❌ Access Denied
+**No/Invalid Token** ❌ Unauthorized
+
+---
+
+## Key Concepts
+
+* JWT validation in middleware
+* Role-based access checks
+* Least Privilege Principle
+* Easily extensible for future roles
+
+---
+
+**Takeaway:**
+Authorization defines trust boundaries and keeps your application secure and scalable.
+
+---

@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { allowRole } from "@/lib/rbac";
-import { Role } from "@prisma/client";
+// Define Role enum locally if not exported from @prisma/client
+enum Role {
+  DOCTOR = "DOCTOR",
+  // Add other roles as needed
+}
 import { sendSuccess, sendError } from "@/lib/responseHandler";
 
 export async function GET(req: NextRequest) {
