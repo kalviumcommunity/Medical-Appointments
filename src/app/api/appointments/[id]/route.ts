@@ -1,45 +1,44 @@
-import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getUserFromToken } from "@/lib/auth";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
-    const idNum = Number(id);
-
-    if (isNaN(idNum)) {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: "Invalid appointment ID" },
-        { status: 400 }
+        { error: "Authorization token required" },
+        { status: 401 }
       );
     }
 
-    const { data: appointment, error } = await supabase
-      .from("Appointment")
-      .select(
-        `
-        *,
-        User (
-          id,
-          name,
-          email
-        )
-      `
-      )
-      .eq("id", idNum)
-      .single();
+    const token = authHeader.substring(7);
+    const user = await getUserFromToken(token);
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Appointment not found" },
-          { status: 404 }
-        );
-      }
-      throw error;
+    if (!user) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
+
+    const { status } = await request.json();
+
+    if (!status || !["WAITING", "SERVING", "COMPLETED"].includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: params.id },
+      include: {
+        doctor: {
+          select: {
+            id: true,
+            role: true,
+          },
+        },
+      },
+    });
 
     if (!appointment) {
       return NextResponse.json(
@@ -48,157 +47,37 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(appointment);
-  } catch (error) {
-    console.error("Error fetching appointment:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const idNum = Number(id);
-    const body = await req.json();
-    const { date, reason, userId } = body;
-
-    if (isNaN(idNum)) {
+    if (user.role !== "DOCTOR" || appointment.doctor.id !== user.id) {
       return NextResponse.json(
-        { error: "Invalid appointment ID" },
-        { status: 400 }
+        { error: "Only the assigned doctor can update appointment status" },
+        { status: 403 }
       );
     }
 
-    if (!date || !reason || !userId) {
-      return NextResponse.json(
-        { error: "Date, reason, and userId are required" },
-        { status: 400 }
-      );
-    }
-
-    // Check if appointment exists
-    const { data: existingAppointment, error: fetchError } = await supabase
-      .from("Appointment")
-      .select("*")
-      .eq("id", idNum)
-      .maybeSingle();
-
-    if (fetchError) {
-      throw fetchError;
-    }
-
-    if (!existingAppointment) {
-      return NextResponse.json(
-        { error: "Appointment not found" },
-        { status: 404 }
-      );
-    }
-
-    // Check if user exists
-    const { data: user, error: userError } = await supabase
-      .from("User")
-      .select("*")
-      .eq("id", Number(userId))
-      .maybeSingle();
-
-    if (userError) {
-      throw userError;
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Update appointment
-    const { data: updatedAppointment, error: updateError } = await supabase
-      .from("Appointment")
-      .update({
-        date: new Date(date).toISOString(),
-        reason,
-        userId: Number(userId),
-      })
-      .eq("id", idNum)
-      .select(
-        `
-        *,
-        User (
-          id,
-          name,
-          email
-        )
-      `
-      )
-      .single();
-
-    if (updateError) {
-      throw updateError;
-    }
+    const updatedAppointment = await prisma.appointment.update({
+      where: { id: params.id },
+      data: { status },
+      include: {
+        patient: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        doctor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
 
     return NextResponse.json(updatedAppointment);
   } catch (error) {
     console.error("Error updating appointment:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const idNum = Number(id);
-
-    if (isNaN(idNum)) {
-      return NextResponse.json(
-        { error: "Invalid appointment ID" },
-        { status: 400 }
-      );
-    }
-
-    // Check if appointment exists
-    const { data: existingAppointment, error: fetchError } = await supabase
-      .from("Appointment")
-      .select("*")
-      .eq("id", idNum)
-      .maybeSingle();
-
-    if (fetchError) {
-      throw fetchError;
-    }
-
-    if (!existingAppointment) {
-      return NextResponse.json(
-        { error: "Appointment not found" },
-        { status: 404 }
-      );
-    }
-
-    // Delete appointment
-    const { error: deleteError } = await supabase
-      .from("Appointment")
-      .delete()
-      .eq("id", idNum);
-
-    if (deleteError) {
-      throw deleteError;
-    }
-
-    return NextResponse.json(
-      { message: "Appointment deleted successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error deleting appointment:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
