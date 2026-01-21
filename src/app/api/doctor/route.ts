@@ -1,24 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { allowRole } from "@/lib/rbac";
 import { Role } from "@prisma/client";
+import { sendSuccess, sendError } from "@/lib/responseHandler";
 
 export async function GET(req: NextRequest) {
   try {
+    // 1️⃣ Verify JWT
     const user = verifyToken(req);
 
+    // 2️⃣ RBAC check (Doctor only)
     if (!allowRole(user.role, [Role.DOCTOR])) {
-      return NextResponse.json(
-        { error: "Access denied. Doctors only." },
-        { status: 403 }
-      );
+      return sendError("Access denied. Doctors only.", "FORBIDDEN", 403);
     }
 
-    return NextResponse.json({
-      message: "Welcome Doctor 👨‍⚕️",
-      doctorId: user.userId,
-    });
-  } catch (err) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 3️⃣ Success response
+    return sendSuccess(
+      {
+        doctorId: user.userId,
+      },
+      "Welcome Doctor 👨‍⚕️"
+    );
+  } catch (error) {
+    console.error("Doctor route error:", error);
+
+    return sendError("Unauthorized access", "UNAUTHORIZED", 401, error);
   }
 }

@@ -161,3 +161,17 @@ This application provides a comprehensive RESTful API for managing users and app
 ```
 
 ---
+
+# Global API Response Handler
+
+- This assignment implements a Global API Response Handler to ensure all API endpoints return responses in a consistent and predictable format.
+
+- A unified response structure with success, message, data, error, and timestamp fields is used across multiple routes.
+
+- This approach simplifies frontend error handling and improves developer experience.
+
+- Standardized error codes help in faster debugging and better observability.
+
+- Using a centralized response utility makes the API scalable and easier to maintain.
+
+---
