@@ -7,7 +7,6 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
-    // 1️⃣ Validation
     if (!email || !password) {
       return sendError(
         "Email and password are required",
@@ -16,47 +15,51 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2️⃣ Find user
-    const user = await prisma.user.findUnique({
+    // 👇 password only for comparison
+    const userWithPassword = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        password: true,
+        createdAt: true,
+      },
     });
 
-    if (!user) {
+    if (!userWithPassword) {
       return sendError("Invalid credentials", "AUTH_FAILED", 401);
     }
 
-    // 3️⃣ Verify password
-    const isValid = await bcrypt.compare(password, user.password);
+    const isValid = await bcrypt.compare(password, userWithPassword.password);
 
     if (!isValid) {
       return sendError("Invalid credentials", "AUTH_FAILED", 401);
     }
 
-    // 4️⃣ Generate JWT
     if (!process.env.JWT_SECRET) {
       return sendError("JWT secret not configured", "CONFIG_ERROR", 500);
     }
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      { userId: userWithPassword.id, role: userWithPassword.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // 5️⃣ Remove password from response
-    const { password: _, ...safeUser } = user;
+    // 👇 safe user (NO password field)
+    const safeUser = {
+      id: userWithPassword.id,
+      name: userWithPassword.name,
+      email: userWithPassword.email,
+      role: userWithPassword.role,
+      createdAt: userWithPassword.createdAt,
+    };
 
-    // 6️⃣ Success response
-    return sendSuccess(
-      {
-        token,
-        user: safeUser,
-      },
-      "Login successful"
-    );
+    return sendSuccess({ token, user: safeUser }, "Login successful");
   } catch (error) {
     console.error("Login error:", error);
-
-    return sendError("Internal server error", "INTERNAL_ERROR", 500, error);
+    return sendError("Internal server error", "INTERNAL_ERROR", 500);
   }
 }
