@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { appointmentCreateSchema } from "@/lib/schemas/appointment.schema";
 import { ZodError } from "zod";
+import { loginSchema } from "@/lib/schemas/auth.schema";
 
-export async function PUT(req: Request) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const validated = appointmentCreateSchema.parse(body);
+    const credentials = loginSchema.parse(body);
 
     return NextResponse.json({
       success: true,
-      message: "Appointment updated",
-      data: validated,
+      message: "Login successful",
+      data: credentials,
     });
 
   } catch (error) {

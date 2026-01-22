@@ -10,11 +10,13 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.90.1",
-    "ioredis": "^5.9.2",
     "next": "16.1.1",
+    "prisma": "^5.22.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -160,25 +160,54 @@ This application provides a comprehensive RESTful API for managing users and app
     └── DELETE /api/appointments/[id]  # Delete appointment
 ```
 
----
-
-# Error Handling Middleware – Next.js
+# 🧠 Module 2.19 – Input Validation with Zod
 
 ## Overview
-This project implements centralized error handling for a Next.js API.  
-All errors are logged in a structured format and handled safely based on the environment.
-
-## Features
-- Centralized API error handling
-- Structured JSON logging
-- Stack traces in development
-- Safe error messages in production
-
-## Why It Matters
-Centralized error handling improves debugging, avoids code duplication, and prevents exposing sensitive details in production.
-
-## Conclusion
-This approach provides clean, secure, and maintainable error handling for scalable applications.
+In this module, input validation was implemented using **Zod** to ensure all API requests receive valid and well-structured data before processing.
 
 ---
+
+## What Was Implemented
+- Integrated **Zod** for validating incoming request bodies.
+- Applied validation to all **POST and PUT APIs**.
+- Added validation for **Users, Patients, and Doctors** endpoints.
+- Ensured invalid data is rejected before reaching business logic or the database.
+- Implemented consistent and readable validation error responses.
+
+---
+
+## Validation Flow
+1. Incoming request body is parsed.
+2. Zod validates the request data against predefined rules.
+3. If validation fails, the API returns a structured error response.
+4. If validation succeeds, the request continues normally.
+
+---
+
+## Error Handling
+- Validation errors return **HTTP 400 – Bad Request**.
+- Errors include field-level messages for easier debugging.
+- Unexpected errors are handled gracefully without crashing the API.
+
+---
+
+## Testing
+- APIs were tested using **Thunder Client**.
+- Both valid and invalid payloads were tested for each endpoint.
+- Validation errors were correctly returned for invalid inputs.
+- Successful responses were received for valid inputs.
+
+---
+
+## Reflection
+Using Zod improved API reliability by preventing invalid data from entering the system.  
+Early validation helped maintain clean data, improved debugging, and ensured consistent behavior across endpoints.
+
+---
+
+## Conclusion
+Zod-based input validation was successfully implemented across the backend, improving safety, consistency, and maintainability of the API.
+
+
+
 

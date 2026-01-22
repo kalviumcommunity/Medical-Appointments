@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
+
 import { supabase } from "@/lib/supabase";
 import { logger } from "@/lib/logger";
 import redis from "@/lib/redis";
+import { userCreateSchema } from "@/lib/schemas/user.schema";
 
+/* =========================
+   GET /api/users
+   List users with pagination + Redis cache
+========================= */
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -12,37 +19,16 @@ export async function GET(req: Request) {
 
     const cacheKey = `users:list:page=${page}:limit=${limit}`;
 
-    // 1️⃣ Try cache first
+    // 1️⃣ Try Redis cache
     const cachedData = await redis.get(cacheKey);
     if (cachedData) {
-      console.log("⚡ Cache HIT");
+      logger.info("Users list cache HIT");
       return NextResponse.json(JSON.parse(cachedData));
     }
 
-    console.log("🐢 Cache MISS - Fetching from DB");
+    logger.info("Users list cache MISS – fetching from DB");
 
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/f25d19fa-0bda-4464-8240-1bedbe651423", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: "debug-session",
-        runId: "post-fix",
-        hypothesisId: "H3",
-        location: "src/app/api/users/route.ts:GET",
-        message: "users GET entry",
-        data: {
-          hasRedis: true,
-          nodeEnv: process.env.NODE_ENV ?? null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion agent log
-
-    logger.info("Fetching users list from database");
-
-    // ✅ FIXED TABLE NAMES
+    // Fetch users
     const { data: users, error: usersError } = await supabase
       .from("users")
       .select(
@@ -59,6 +45,7 @@ export async function GET(req: Request) {
 
     if (usersError) throw usersError;
 
+    // Count total users
     const { count: totalCount, error: countError } = await supabase
       .from("users")
       .select("*", { count: "exact", head: true });
@@ -68,44 +55,43 @@ export async function GET(req: Request) {
     const response = {
       page,
       limit,
-      totalCount: totalCount || 0,
-      totalPages: Math.ceil((totalCount || 0) / limit),
-      data: users || [],
+      totalCount: totalCount ?? 0,
+      totalPages: Math.ceil((totalCount ?? 0) / limit),
+      data: users ?? [],
       source: "database",
     };
 
-    // 2️⃣ Store in Redis (TTL = 60s)
+    // 2️⃣ Store in Redis (TTL: 60s)
     await redis.set(cacheKey, JSON.stringify(response), "EX", 60);
 
     return NextResponse.json(response);
   } catch (error) {
-    // 🔥 TEMPORARY RAW ERROR (DO NOT HIDE IT)
     console.error("RAW GET /api/users ERROR 👉", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Unknown raw error",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
   }
 }
 
+/* =========================
+   POST /api/users
+   Create new user
+========================= */
 export async function POST(req: Request) {
   try {
     logger.info("Creating new user");
 
     const body = await req.json();
-    const { name, email } = body;
 
-    if (!name || !email) {
-      return NextResponse.json(
-        { success: false, message: "Name and email are required" },
-        { status: 400 }
-      );
-    }
+    // ✅ Validate input
+    const { name, email } = userCreateSchema.parse(body);
 
+    // Check if user already exists
     const { data: existingUser, error: checkError } = await supabase
       .from("users")
       .select("*")
@@ -121,6 +107,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Create user
     const { data: newUser, error: createError } = await supabase
       .from("users")
       .insert([{ name, email }])
@@ -134,17 +121,34 @@ export async function POST(req: Request) {
 
     if (createError) throw createError;
 
-    // 🧹 Cache invalidation (REQUIRED for 2.23)
+    // 🧹 Cache invalidation (mandatory)
     await redis.del("users:list:page=1:limit=10");
 
-    return NextResponse.json({ success: true, data: newUser }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: newUser },
+      { status: 201 }
+    );
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Validation Error",
+          errors: error.issues.map((e) => ({
+            field: e.path[0],
+            message: e.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
     console.error("RAW POST /api/users ERROR 👉", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Unknown raw error",
+        message: error instanceof Error ? error.message : "Internal Server Error",
       },
       { status: 500 }
     );
