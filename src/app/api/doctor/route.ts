@@ -1,33 +1,36 @@
-import { NextRequest } from "next/server";
-import { verifyToken } from "@/lib/auth";
-import { allowRole } from "@/lib/rbac";
-// Define Role enum locally if not exported from @prisma/client
-enum Role {
-  DOCTOR = "DOCTOR",
-  // Add other roles as needed
-}
-import { sendSuccess, sendError } from "@/lib/responseHandler";
+import { NextResponse } from "next/server";
+import { ZodError } from "zod";
+import { doctorCreateSchema } from "@/lib/schemas/doctor.schema";
 
-export async function GET(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    // 1️⃣ Verify JWT
-    const user = verifyToken(req);
+    const body = await req.json();
 
-    // 2️⃣ RBAC check (Doctor only)
-    if (!allowRole(user.role, [Role.DOCTOR])) {
-      return sendError("Access denied. Doctors only.", "FORBIDDEN", 403);
+    const validatedData = doctorCreateSchema.parse(body);
+
+    return NextResponse.json({
+      success: true,
+      message: "Doctor created successfully",
+      data: validatedData,
+    });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Validation Error",
+          errors: error.issues.map(e => ({
+            field: e.path[0],
+            message: e.message,
+          })),
+        },
+        { status: 400 }
+      );
     }
 
-    // 3️⃣ Success response
-    return sendSuccess(
-      {
-        doctorId: user.userId,
-      },
-      "Welcome Doctor 👨‍⚕️"
+    return NextResponse.json(
+      { success: false, message: "Internal Server Error" },
+      { status: 500 }
     );
-  } catch (error) {
-    console.error("Doctor route error:", error);
-
-    return sendError("Unauthorized access", "UNAUTHORIZED", 401, error);
   }
 }
