@@ -1,86 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getUserFromToken } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { appointmentCreateSchema } from "@/lib/schemas/appointment.schema";
+import { ZodError } from "zod";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: Request) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Authorization token required" },
-        { status: 401 }
-      );
-    }
+    const body = await req.json();
 
-    const token = authHeader.substring(7);
-    const user = await getUserFromToken(token);
+    const validated = appointmentCreateSchema.parse(body);
 
-    if (!user) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
-    const { status } = await request.json();
-
-    if (!status || !["WAITING", "SERVING", "COMPLETED"].includes(status)) {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-    }
-
-    const appointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
-      include: {
-        doctor: {
-          select: {
-            id: true,
-            role: true,
-          },
-        },
-      },
+    return NextResponse.json({
+      success: true,
+      message: "Appointment updated",
+      data: validated,
     });
 
-    if (!appointment) {
-      return NextResponse.json(
-        { error: "Appointment not found" },
-        { status: 404 }
-      );
-    }
-
-    if (user.role !== "DOCTOR" || appointment.doctor.id !== user.id) {
-      return NextResponse.json(
-        { error: "Only the assigned doctor can update appointment status" },
-        { status: 403 }
-      );
-    }
-
-    const updatedAppointment = await prisma.appointment.update({
-      where: { id: params.id },
-      data: { status },
-      include: {
-        patient: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        doctor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json(updatedAppointment);
   } catch (error) {
-    console.error("Error updating appointment:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Validation Error",
+          errors: error.issues,
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }
