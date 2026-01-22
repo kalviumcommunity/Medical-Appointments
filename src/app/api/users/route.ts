@@ -1,10 +1,26 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { handleError } from "@/lib/errorHandler";
 import { logger } from "@/lib/logger";
+import redis from "@/lib/redis";
 
 export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 10;
+    const skip = (page - 1) * limit;
+
+    const cacheKey = `users:list:page=${page}:limit=${limit}`;
+
+    // 1️⃣ Try cache first
+    const cachedData = await redis.get(cacheKey);
+    if (cachedData) {
+      console.log("⚡ Cache HIT");
+      return NextResponse.json(JSON.parse(cachedData));
+    }
+
+    console.log("🐢 Cache MISS - Fetching from DB");
+
     // #region agent log
     fetch("http://127.0.0.1:7242/ingest/f25d19fa-0bda-4464-8240-1bedbe651423", {
       method: "POST",
@@ -13,10 +29,10 @@ export async function GET(req: Request) {
         sessionId: "debug-session",
         runId: "post-fix",
         hypothesisId: "H3",
-        location: "src/app/api/users/route.ts:11",
+        location: "src/app/api/users/route.ts:GET",
         message: "users GET entry",
         data: {
-          hasDatabaseUrlEnv: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+          hasRedis: true,
           nodeEnv: process.env.NODE_ENV ?? null,
         },
         timestamp: Date.now(),
@@ -24,19 +40,15 @@ export async function GET(req: Request) {
     }).catch(() => {});
     // #endregion agent log
 
-    logger.info("Fetching users list");
+    logger.info("Fetching users list from database");
 
-    const { searchParams } = new URL(req.url);
-    const page = Number(searchParams.get("page")) || 1;
-    const limit = Number(searchParams.get("limit")) || 10;
-    const skip = (page - 1) * limit;
-
+    // ✅ FIXED TABLE NAMES
     const { data: users, error: usersError } = await supabase
-      .from("User")
+      .from("users")
       .select(
         `
         *,
-        Appointment (
+        appointments (
           id,
           date,
           reason
@@ -45,50 +57,38 @@ export async function GET(req: Request) {
       )
       .range(skip, skip + limit - 1);
 
-    if (usersError) {
-      throw usersError;
-    }
+    if (usersError) throw usersError;
 
     const { count: totalCount, error: countError } = await supabase
-      .from("User")
+      .from("users")
       .select("*", { count: "exact", head: true });
 
-    if (countError) {
-      throw countError;
-    }
+    if (countError) throw countError;
 
-    const totalPages = Math.ceil((totalCount || 0) / limit);
-
-    return NextResponse.json({
+    const response = {
       page,
       limit,
       totalCount: totalCount || 0,
-      totalPages,
+      totalPages: Math.ceil((totalCount || 0) / limit),
       data: users || [],
-    });
-  } catch (error) {
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/f25d19fa-0bda-4464-8240-1bedbe651423", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: "debug-session",
-        runId: "post-fix",
-        hypothesisId: "H2",
-        location: "src/app/api/users/route.ts:73",
-        message: "users GET failed",
-        data: {
-          message: error instanceof Error ? error.message : "unknown",
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion agent log
+      source: "database",
+    };
 
-    return handleError(error, {
-      route: "/api/users",
-      method: "GET",
-    });
+    // 2️⃣ Store in Redis (TTL = 60s)
+    await redis.set(cacheKey, JSON.stringify(response), "EX", 60);
+
+    return NextResponse.json(response);
+  } catch (error) {
+    // 🔥 TEMPORARY RAW ERROR (DO NOT HIDE IT)
+    console.error("RAW GET /api/users ERROR 👉", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : "Unknown raw error",
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -107,14 +107,12 @@ export async function POST(req: Request) {
     }
 
     const { data: existingUser, error: checkError } = await supabase
-      .from("User")
+      .from("users")
       .select("*")
       .eq("email", email)
       .maybeSingle();
 
-    if (checkError) {
-      throw checkError;
-    }
+    if (checkError) throw checkError;
 
     if (existingUser) {
       return NextResponse.json(
@@ -124,25 +122,31 @@ export async function POST(req: Request) {
     }
 
     const { data: newUser, error: createError } = await supabase
-      .from("User")
+      .from("users")
       .insert([{ name, email }])
       .select(
         `
         *,
-        Appointment (*)
+        appointments (*)
       `
       )
       .single();
 
-    if (createError) {
-      throw createError;
-    }
+    if (createError) throw createError;
+
+    // 🧹 Cache invalidation (REQUIRED for 2.23)
+    await redis.del("users:list:page=1:limit=10");
 
     return NextResponse.json({ success: true, data: newUser }, { status: 201 });
   } catch (error) {
-    return handleError(error, {
-      route: "/api/users",
-      method: "POST",
-    });
+    console.error("RAW POST /api/users ERROR 👉", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : "Unknown raw error",
+      },
+      { status: 500 }
+    );
   }
 }
