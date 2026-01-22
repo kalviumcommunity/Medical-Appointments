@@ -1,56 +1,113 @@
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
-import { getRoleFromEmail } from "@/lib/rbac";
-import { sendSuccess, sendError } from "@/lib/responseHandler";
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
+import { handleError } from "@/lib/errorHandler";
+import { logger } from "@/lib/logger";
+
+export async function GET(req: Request) {
+  try {
+    logger.info("Fetching users list");
+
+    const { searchParams } = new URL(req.url);
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 10;
+    const skip = (page - 1) * limit;
+
+    const { data: users, error: usersError } = await supabase
+      .from("User")
+      .select(
+        `
+        *,
+        Appointment (
+          id,
+          date,
+          reason
+        )
+      `
+      )
+      .range(skip, skip + limit - 1);
+
+    if (usersError) {
+      throw usersError;
+    }
+
+    const { count: totalCount, error: countError } = await supabase
+      .from("User")
+      .select("*", { count: "exact", head: true });
+
+    if (countError) {
+      throw countError;
+    }
+
+    const totalPages = Math.ceil((totalCount || 0) / limit);
+
+    return NextResponse.json({
+      page,
+      limit,
+      totalCount: totalCount || 0,
+      totalPages,
+      data: users || [],
+    });
+  } catch (error) {
+    return handleError(error, {
+      route: "/api/users",
+      method: "GET",
+    });
+  }
+}
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    logger.info("Creating new user");
 
-    // 1️⃣ Validation
-    if (!name || !email || !password) {
-      return sendError("All fields are required", "VALIDATION_ERROR", 400);
+    const { name, email } = await req.json();
+
+    if (!name || !email) {
+      return NextResponse.json(
+        { success: false, message: "Name and email are required" },
+        { status: 400 }
+      );
     }
 
-    // 2️⃣ Check existing user
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const { data: existingUser, error: checkError } = await supabase
+      .from("User")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (checkError) {
+      throw checkError;
+    }
 
     if (existingUser) {
-      return sendError("User already exists", "USER_EXISTS", 409);
+      return NextResponse.json(
+        { success: false, message: "User with this email already exists" },
+        { status: 409 }
+      );
     }
 
-    // 3️⃣ Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { data: newUser, error: createError } = await supabase
+      .from("User")
+      .insert([{ name, email }])
+      .select(
+        `
+        *,
+        Appointment (*)
+      `
+      )
+      .single();
 
-    // 4️⃣ Auto role decision
-    const role = getRoleFromEmail(email);
+    if (createError) {
+      throw createError;
+    }
 
-    // 5️⃣ Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-      },
-    });
-
-    // 6️⃣ Success response
-    return sendSuccess(
-      {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      "Signup successful",
-      201
+    return NextResponse.json(
+      { success: true, data: newUser },
+      { status: 201 }
     );
   } catch (error) {
-    console.error("Signup error:", error);
-
-    return sendError("Internal server error", "INTERNAL_ERROR", 500, error);
+    return handleError(error, {
+      route: "/api/users",
+      method: "POST",
+    });
   }
 }
