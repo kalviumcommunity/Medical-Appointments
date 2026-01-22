@@ -160,25 +160,7 @@ This application provides a comprehensive RESTful API for managing users and app
     └── DELETE /api/appointments/[id]  # Delete appointment
 ```
 
----
 
-# Error Handling Middleware – Next.js
 
-## Overview
-This project implements centralized error handling for a Next.js API.  
-All errors are logged in a structured format and handled safely based on the environment.
 
-## Features
-- Centralized API error handling
-- Structured JSON logging
-- Stack traces in development
-- Safe error messages in production
-
-## Why It Matters
-Centralized error handling improves debugging, avoids code duplication, and prevents exposing sensitive details in production.
-
-## Conclusion
-This approach provides clean, secure, and maintainable error handling for scalable applications.
-
----
 

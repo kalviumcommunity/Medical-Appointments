@@ -5,25 +5,6 @@ import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/f25d19fa-0bda-4464-8240-1bedbe651423", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: "debug-session",
-        runId: "post-fix",
-        hypothesisId: "H3",
-        location: "src/app/api/users/route.ts:11",
-        message: "users GET entry",
-        data: {
-          hasDatabaseUrlEnv: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
-          nodeEnv: process.env.NODE_ENV ?? null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion agent log
-
     logger.info("Fetching users list");
 
     const { searchParams } = new URL(req.url);
@@ -67,24 +48,6 @@ export async function GET(req: Request) {
       data: users || [],
     });
   } catch (error) {
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/f25d19fa-0bda-4464-8240-1bedbe651423", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: "debug-session",
-        runId: "post-fix",
-        hypothesisId: "H2",
-        location: "src/app/api/users/route.ts:73",
-        message: "users GET failed",
-        data: {
-          message: error instanceof Error ? error.message : "unknown",
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion agent log
-
     return handleError(error, {
       route: "/api/users",
       method: "GET",
@@ -96,8 +59,7 @@ export async function POST(req: Request) {
   try {
     logger.info("Creating new user");
 
-    const body = await req.json();
-    const { name, email } = body;
+    const { name, email } = await req.json();
 
     if (!name || !email) {
       return NextResponse.json(
@@ -138,7 +100,10 @@ export async function POST(req: Request) {
       throw createError;
     }
 
-    return NextResponse.json({ success: true, data: newUser }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: newUser },
+      { status: 201 }
+    );
   } catch (error) {
     return handleError(error, {
       route: "/api/users",
