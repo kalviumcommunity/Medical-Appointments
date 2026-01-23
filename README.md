@@ -216,7 +216,7 @@ Zod was integrated with React Hook Form using `zodResolver`, allowing validation
 
 Reusable input components were created to avoid repetition and improve maintainability. Accessibility was considered by using proper labels, clear error messages, and `aria-invalid` for invalid fields.
 
-Form validation was tested directly in the browser by submitting invalid and valid inputs, and successful submissions were logged in the console.
+Form validation was tested directly in the browser by submitting invalid and valid inputs, and successful submissions were logged in the console!. 
 
 
 
