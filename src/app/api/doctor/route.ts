@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { doctorCreateSchema } from "@/lib/schemas/doctor.schema";
+import { verifyToken } from "@/lib/auth";
+import { allowRole } from "@/lib/rbac";
+import { Role } from "@prisma/client";
 
+/* ---------------- CREATE DOCTOR ---------------- */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
     const validatedData = doctorCreateSchema.parse(body);
 
     return NextResponse.json({
@@ -19,7 +22,7 @@ export async function POST(req: Request) {
         {
           success: false,
           message: "Validation Error",
-          errors: error.issues.map(e => ({
+          errors: error.issues.map((e) => ({
             field: e.path[0],
             message: e.message,
           })),
@@ -31,6 +34,31 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }
+    );
+  }
+}
+
+/* ---------------- RBAC CHECK (DOCTOR ONLY) ---------------- */
+export async function GET(req: NextRequest) {
+  try {
+    const user = verifyToken(req);
+
+    if (!allowRole(user.role, [Role.DOCTOR])) {
+      return NextResponse.json(
+        { success: false, message: "Access denied. Doctors only." },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Welcome Doctor 👨‍⚕️",
+      doctorId: user.userId,
+    });
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
     );
   }
 }

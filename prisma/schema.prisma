@@ -10,6 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 enum Role {
   PATIENT
@@ -22,28 +23,18 @@ enum AppointmentStatus {
   COMPLETED
 }
 
-// model User {
-//   id        String   @id @default(cuid())
-//   name      String
-//   email     String   @unique
-//   password  String
-//   role      Role
-//   createdAt DateTime @default(now())
-
-//   patientAppointments Appointment[] @relation("PatientAppointments")
-//   doctorAppointments  Appointment[] @relation("DoctorAppointments")
-
-//   @@map("users")
-// }
 model User {
-  id       Int     @id @default(autoincrement())
-  name     String
-  email    String  @unique
-  password String
-  role     String  @default("user") // e.g., "admin", "user"
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
 
-  appointments Appointment[] @relation("PatientAppointments")
-  doctorAppointments Appointment[] @relation("DoctorAppointments")
+  patientAppointments Appointment[] @relation("PatientAppointments")
+  doctorAppointments  Appointment[] @relation("DoctorAppointments")
+
+  @@map("users")
 }
 
 model Appointment {
@@ -53,8 +44,8 @@ model Appointment {
   date        DateTime          @db.Date
   createdAt   DateTime          @default(now())
 
-  patientId Int
-  doctorId  Int
+  patientId String
+  doctorId  String
 
   patient User @relation("PatientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
   doctor  User @relation("DoctorAppointments", fields: [doctorId], references: [id], onDelete: Cascade)
