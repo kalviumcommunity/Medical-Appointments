@@ -208,6 +208,15 @@ Early validation helped maintain clean data, improved debugging, and ensured con
 ## Conclusion
 Zod-based input validation was successfully implemented across the backend, improving safety, consistency, and maintainability of the API.
 
+## React Hook Form + Zod Validation
+
+In this project, we implemented reusable and validated forms using **React Hook Form** and **Zod**. React Hook Form was used to efficiently manage form state with minimal re-renders, while Zod provided schema-based, type-safe validation.
+
+Zod was integrated with React Hook Form using `zodResolver`, allowing validation rules to be defined separately from UI logic. Validation errors are displayed clearly below each input field to improve user experience.
+
+Reusable input components were created to avoid repetition and improve maintainability. Accessibility was considered by using proper labels, clear error messages, and `aria-invalid` for invalid fields.
+
+Form validation was tested directly in the browser by submitting invalid and valid inputs, and successful submissions were logged in the console.
 
 
 
