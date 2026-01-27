@@ -220,3 +220,22 @@ Form validation was tested directly in the browser by submitting invalid and val
 
 
 
+# Loading & Error States in Next.js App
+
+## Explanation
+Handling loading and error states improves UX by keeping users informed during delays or failures. Instead of blank screens or crashes, skeletons and error boundaries provide a clear, friendly interface that builds trust.
+
+## Implementation Summary
+- **Loading Skeletons:** Created `loading.js` in each route folder. Used Tailwind's `animate-pulse` and gray blocks to simulate content while data fetches.
+- **Error Boundaries:** Created `error.js` in each route folder. Displays an error message and a retry button using the `reset()` function to re-render the page.
+
+## Evidence
+1. **Loading State:** ![Loading Skeleton]![alt text](loading.png-1.png)
+2. **Error State:** ![Error Fallback]![alt text](error.png.png)
+3. **Success State:** ![Data Loaded]![alt text](success.png.png)
+
+## Reflection
+These states enhance user trust by:  
+- Providing visual feedback during delays  
+- Allowing graceful recovery from errors  
+- Maintaining a consistent and resilient UI
