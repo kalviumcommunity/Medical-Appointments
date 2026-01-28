@@ -239,3 +239,34 @@ These states enhance user trust by:
 - Providing visual feedback during delays  
 - Allowing graceful recovery from errors  
 - Maintaining a consistent and resilient UI
+
+
+# Input Sanitization & OWASP Compliance
+
+This project demonstrates secure handling of user inputs to prevent XSS and SQL Injection (SQLi) attacks.
+
+## Features Implemented
+
+- **Input Sanitization:** All user inputs are sanitized using `sanitize-html` before storing or processing.
+- **Output Encoding:** Data is safely encoded in the UI (React auto-escapes by default).
+- **SQL Injection Prevention:** Database queries are parameterized using Prisma ORM.
+- **Before/After Proof:** Screenshots show malicious input handled safely.
+
+## Example
+
+### Before Sanitization
+**Input:** `<script>alert("Hacked")</script>`  
+**Output:** `<script>alert("Hacked")</script>` (unsafe)
+**Proof:** ![Proof for unsafe](unsafe.png)
+
+### After Sanitization
+**Input:** `<script>alert("Hacked")</script>`  
+**Output:** `` (safe, script removed)
+**Proof:** ![Proof for safe](safe.png)
+
+## Reflection
+
+- Never trust user inputs; always sanitize and validate.
+- Security is a continuous process; ongoing reviews and proper coding practices are essential.
+- Future improvements: Content Security Policy (CSP), stricter validation schemas, secure headers.
+
